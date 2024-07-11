@@ -1,41 +1,37 @@
 import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, requestUrl } from 'obsidian';
+import { a2nSettings } from 'model/a2nSettings';
+import { DEFAULT_SETTINGS } from 'data/defaultSettings';
+import { a2nModal } from 'a2nModal';
 
-interface Anything2NotesSettings {
-    ollamaServerUrl: string;
-    defaultModel: string;
-    defaultTemperature: number;
-    defaultPrompt: string;
-}
-
-const DEFAULT_SETTINGS: Anything2NotesSettings = {
-    ollamaServerUrl: "http://localhost:11434",
-    defaultModel: 'llama3',
-    defaultTemperature: 0.5,
-    defaultPrompt: 'Summarize the given text in your own words:',
-}
 
 export default class Anything2Notes extends Plugin {
-    settings: Anything2NotesSettings;
+    settings: a2nSettings;
 
     async onload() {
         await this.loadSettings();
 
         const ribbonIconEl = this.addRibbonIcon('book', 'Anything2Notes', async (evt: MouseEvent) => {
-            const currentContent = await this.readCurrentFile();
-            if (currentContent) {
-                const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-                if (view) {
-                    await this.writeNotes(view.editor, view, currentContent);
-                } else {
-                    new Notice('No active Markdown view');
-                }
-            }
+            // const currentContent = await this.readCurrentFile();
+            // if (currentContent) {
+            //     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+            //     if (view) {
+            //         await this.writeNotes(view.editor, view, currentContent);
+            //     } else {
+            //         new Notice('No active Markdown view');
+            //     }
+            // }
+            new a2nModal(this.app).open();
+            // TODO: make modal show all the commands
         });
 
         ribbonIconEl.addClass('my-plugin-ribbon-class');
 
         this.addSettingTab(new SampleSettingTab(this.app, this));
     }
+
+
+
+
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -76,7 +72,7 @@ export default class Anything2Notes extends Plugin {
                 method: 'POST',
                 url: `${this.settings.ollamaServerUrl}/api/generate`,
                 body: JSON.stringify({
-                    prompt: `${this.settings.defaultPrompt} ${content}`,
+                    prompt: `${this.settings.commands} ${content}`,
                     model: this.settings.defaultModel,
                     options: {
                         temperature: this.settings.defaultTemperature,
